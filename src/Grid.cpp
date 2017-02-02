@@ -28,15 +28,16 @@ Grid::Grid(const uint& para_nx,const uint& para_ny)
 }
 
 //apply boundary condition to U
-void Grid::applyBoundaryU(Grid& para_u, const uint& para_nx , const uint& para_ny, const real& para_hx)
+void Grid::applyBoundaryU(Grid& para_u, const uint& para_xStart, const uint& para_xEnd,const uint& para_yStart, const uint& para_yEnd, const real& para_hx)
 {
 	real SIN_H = std::sinh(m_pi);
 	
-	const uint term = (para_ny-1) * para_nx;	// i * para_nx
+	const uint term = (para_yEnd - para_yStart) - 1;	// i * para_nx
 
-	for(uint j = 0 ; j < para_nx ; j++ )
+	for(uint j = para_xStart, x = 0 ; j < para_xEnd ; j++, x++)
 	{
-		para_u.data[term + j] = std::sin(m_pi * para_hx * j) * SIN_H;
+		//para_u.data[term + j] = std::sin(m_pi * para_hx * j) * SIN_H;
+	  para_u(term,j) = std::sin(m_pi * para_hx * j) * SIN_H;
 	}
 }
 

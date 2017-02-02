@@ -71,13 +71,6 @@ int main(int argc, char** argv)
 
 	//std::cout<<"hx is... "<<hx<<"\t hy is..."<<hy<<std::endl;
 
-	Grid u_exact(nx,ny);
-	Grid u(nx,ny);
-	Grid rhs(nx,ny);
-	Grid res(nx,ny);
-	Grid d(nx,ny);
-	Grid z(nx,ny);
-
 	cg cgMPI;
 	
 	int elementX = 0,elementY = 0 , xStart = 0, xEnd = 0 , yStart = 0 , yEnd = 0;
@@ -85,22 +78,33 @@ int main(int argc, char** argv)
 	cgMPI.findElementsinXY(elementX,elementY,nx,ny,numProcX,numProcY,cartCordX,cartCordY);
 	cgMPI.findGlobalCoord(xStart,xEnd,yStart,yEnd,elementX,elementY,cartCordX,cartCordY,numProcX,numProcY,nx,ny);
 	
-	//create vector in contigous in memory
+	//create vector in contigous in memory that gives how many elements we want to send
 	MPI_Datatype rowType,colType;
 	MPI_Type_contiguous(elementX,MPI_DOUBLE,&rowType);
 	MPI_Type_commit(&rowType);
 	MPI_Type_vector(elementY,1,0,rowType,&colType);
 	MPI_Type_commit(&colType);
-	
-	
-	if(rankProc == 0)
-	{
-	  std::cout<<"xstart "<<xStart<<"\t xEnd "<<xEnd<<"\tystart "<<yStart<<"\t yEnd "<<yEnd<<std::endl;
-	}
 
-	u_exact.applyBoundaryU(u_exact,nx,ny,hx);
-	rhs.applyBoundaryRHS(rhs,nx,ny,hx,hy);
+	Grid u_exact(elementX,elementY);
+	Grid u(elementX,elementY);
+	Grid rhs(elementX,elementY);
+	Grid res(elementX,elementY);
+	Grid d(elementX,elementY);
+	Grid z(elementX,elementY);
 	
+	//int size = 0;
+	//MPI_Type_size(colType,&size);
+	
+	
+	if(rankProc == 1)
+	{
+	  std::cout<<"xstart "<<xStart<<"\t xEnd "<<xEnd<<"\tystart "<<yStart<<"\t yEnd "<<yEnd<<"\t elementX "<<elementX<<"\t elementY "<<elementY<<std::endl;
+	}
+	u_exact.applyBoundaryU(u_exact,nx,ny,hx);
+	MPI_Barrier(GRID_COMM_CART);
+	
+	rhs.applyBoundaryRHS(rhs,nx,ny,hx,hy);
+	MPI_Barrier(GRID_COMM_CART);
 
 	real delta0 = 0.0 , alpha = 0.0 , delta1 = 0.0 , beta = 0.0;
 
