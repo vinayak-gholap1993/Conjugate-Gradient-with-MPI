@@ -22,5 +22,7 @@ typedef unsigned int uint;
 #define m_pi 6.283185
 
 #define ndims 2
+#define ghostLayer 2
+
 
 #endif

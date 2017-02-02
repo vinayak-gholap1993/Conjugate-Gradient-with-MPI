@@ -2,6 +2,8 @@
 #include"type.h"
 #include"Grid.h"
 #include"cg.h"
+#include "../include/Grid.h"
+
 
 void write( const Grid& para_storeToFile,const uint& para_nx,const uint& para_ny,const real& para_hx,const real& para_hy)
 {
@@ -95,21 +97,28 @@ int main(int argc, char** argv)
 	//int size = 0;
 	//MPI_Type_size(colType,&size);
 	
-	
-	if(rankProc == 1)
-	{
-	  std::cout<<"xstart "<<xStart<<"\t xEnd "<<xEnd<<"\tystart "<<yStart<<"\t yEnd "<<yEnd<<"\t elementX "<<elementX<<"\t elementY "<<elementY<<std::endl;
-	}
-	u_exact.applyBoundaryU(u_exact,nx,ny,hx);
+	u_exact.applyBoundaryU(u_exact,xStart,xEnd,yStart,yEnd,hx,numProcY,cartCordX,cartCordY);
 	MPI_Barrier(GRID_COMM_CART);
 	
-	rhs.applyBoundaryRHS(rhs,nx,ny,hx,hy);
+	rhs.applyBoundaryRHS(rhs,xStart,elementX,yStart,elementY,hx,hy,cartCordX);
 	MPI_Barrier(GRID_COMM_CART);
 
+	/*
+	if(rankProc == 9)
+	{
+	  std::cout<<totalGrid<<weightC<<"\t xstart "<<xStart<<"\t xEnd "<<xEnd<<"\tystart "<<yStart<<"\t yEnd "<<yEnd<<"\t elementX "<<elementX<<"\t elementY "<<elementY<<std::endl;
+	  u_exact.print(u_exact,elementX,elementY);
+	  std::cout<<"\n \n";
+	  rhs.print(rhs,elementX,elementY);
+	  
+	}
+	*/
+	
+	
 	real delta0 = 0.0 , alpha = 0.0 , delta1 = 0.0 , beta = 0.0;
 
 	cgMPI.computeFirstStep(u,rhs,res,d,delta0,nx,ny,invHX,invHY,weightC);
-
+/*
 	for(int iter = 1; iter < std::atoi(argv[3]) ; ++iter)
 	{
 		cgMPI.multiplyVector(d,z,alpha,nx,ny,invHX,invHY,weightC);
@@ -126,7 +135,7 @@ int main(int argc, char** argv)
 	}
 
 	//write(u,nx,ny,hx,hy);
-	
+	*/
 	MPI_Finalize();
 	
 return 0;
