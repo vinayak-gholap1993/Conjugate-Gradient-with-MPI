@@ -20,6 +20,9 @@ public:
 
 	void findElementsinXY(int& elementX, int& elementY, const uint& nx, const uint& ny,const int& numProcX,const int& numProcY,const int& cartCordX,const int& cartCordY);
 	void findGlobalCoord(int& xStart,int& xEnd,int& yStart,int& yEnd,const int& elementX,const int& elementY,const int& mycoordX,const int& mycoordY,const int& numProcX,const int& numProcY,const uint& nx,const uint& ny);
+
+	void sendReceiveMsg(Grid& u,int& elementX,int& elementY,MPI_Comm& GRID_COMM_CART,MPI_Datatype& colType,MPI_Datatype& rowType);
+	
 };
 
 #endif

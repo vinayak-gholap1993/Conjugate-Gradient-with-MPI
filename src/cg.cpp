@@ -128,3 +128,89 @@ void cg::findGlobalCoord(int& xStart,int& xEnd,int& yStart,int& yEnd,const int& 
     }*/
       
 }
+
+/* 
+  dir = 0 , disp = 1 => + x-axis ,
+  dir = 0 , disp = -1 => - x-axis,
+  dir = 1 , disp = 1 => + y-axis , 
+  dir = 1 , disp = -1 => - y-axis 
+*/
+void cg::sendReceiveMsg(Grid& u,int& elementX,int& elementY,MPI_Comm& GRID_COMM_CART,MPI_Datatype& colType,MPI_Datatype& rowType)
+{
+   
+  int srcRank , dstRank;
+  int count = 0 , myrank;
+  MPI_Request requestHandle[8];
+  MPI_Status statusHandle[8];
+  
+  //left , right , top , bottom
+  int sendBuffer0[] = { 1 , 1  , elementY , 1} , sendBuffer1[] = { elementX , 1 , 1 , 1};
+  int recvBuffer0[] = { 1 , 1 , 0 , elementY+1} , recvBuffer1[] = { 0 , elementX+1 , 1 , 1}; 
+  
+  int tag[] = { 1 , 2 , 3 , 4 }; //for left , right , top , bottom
+  
+  //we want to transfer/receive data in x and y direction
+  for(int dir = 0 ; dir < ndims ; ++dir)
+  {
+    for(int disp = 1 ; disp > -2 ; disp -= 2)
+    {
+	MPI_Cart_shift(GRID_COMM_CART,dir,disp,&srcRank,&dstRank);
+	
+	MPI_Comm_rank(GRID_COMM_CART,&myrank);
+	
+	
+// count < 2 means first, we shift in x-axis.	
+//---------------------------------------------------------------------------------------------------------------------------------	
+	if(count < 2)	// column shift
+	{ 
+	  
+	  if(srcRank != MPI_PROC_NULL)
+	    {
+	      
+	      // receive message from left boundary
+	      MPI_Irecv( &u(recvBuffer0[count],recvBuffer1[count]),1,colType,srcRank,tag[count],GRID_COMM_CART,&requestHandle[count]);
+	    }
+	  
+	  if(dstRank != MPI_PROC_NULL)
+	  {
+	    //std::cout<<"srcRank "<<srcRank<<"\tdstRank "<<dstRank<<"\t"<<myrank<<"  I am here"<<std::endl;
+	    MPI_Isend(&u(sendBuffer0[count],sendBuffer1[count]),1,colType,dstRank,tag[count],GRID_COMM_CART,&requestHandle[count+4]);
+	    
+	  }
+	}
+//-------------------------------------------------------------------------------------------------------------------------------------	  
+	else	// row shift
+	{
+	  if(srcRank != MPI_PROC_NULL)
+	    {
+	      // receive message from left boundary
+	      MPI_Irecv( &u(recvBuffer0[count],recvBuffer1[count]),1,rowType,srcRank,tag[count],GRID_COMM_CART,&requestHandle[count]);
+	    }
+	  
+	  if(dstRank != MPI_PROC_NULL)
+	  {
+	    MPI_Isend(&u(sendBuffer0[count],sendBuffer1[count]),1,rowType,dstRank,tag[count],GRID_COMM_CART,&requestHandle[count+4]);
+	  }
+	}  
+	   
+//-------------------------------------------------------------------------------------------------------------------------------------
+
+      if(srcRank != MPI_PROC_NULL)
+      {
+	MPI_Wait(&requestHandle[count],&statusHandle[count]);
+      }
+	
+      if(dstRank != MPI_PROC_NULL)
+      {
+	MPI_Wait(&requestHandle[count+4],&statusHandle[count+4]);
+      }	
+      count++;
+    } // disp
+    
+  } // dir
+
+  
+} // function
+
+
+

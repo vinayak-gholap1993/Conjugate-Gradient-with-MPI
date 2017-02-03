@@ -3,6 +3,7 @@
 #include"Grid.h"
 #include"cg.h"
 #include "../include/Grid.h"
+#include "../include/cg.h"
 
 
 void write( const Grid& para_storeToFile,const uint& para_nx,const uint& para_ny,const real& para_hx,const real& para_hy)
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
 	MPI_Datatype rowType,colType;
 	MPI_Type_contiguous(elementX,MPI_DOUBLE,&rowType);
 	MPI_Type_commit(&rowType);
-	MPI_Type_vector(elementY,1,0,rowType,&colType);
+	MPI_Type_vector(elementY,1,elementX+2,rowType,&colType);
 	MPI_Type_commit(&colType);
 
 	Grid u_exact(elementX,elementY);
@@ -114,10 +115,18 @@ int main(int argc, char** argv)
 	}
 	*/
 	
+	cgMPI.sendReceiveMsg(u,elementX,elementY,GRID_COMM_CART,colType,rowType);
+	MPI_Barrier(GRID_COMM_CART);
 	
-	real delta0 = 0.0 , alpha = 0.0 , delta1 = 0.0 , beta = 0.0;
+	if(rankProc == 9)
+	{
+	//  std::cout<<"sourceRank "<<srcRank<<"dstRank "<<dstRank<<std::endl;  
+	  std::cout<<"\n\n"<<totalGrid<<weightC<<std::endl;
+	}
+	
+//	real delta0 = 0.0 , alpha = 0.0 , delta1 = 0.0 , beta = 0.0;
 
-	cgMPI.computeFirstStep(u,rhs,res,d,delta0,nx,ny,invHX,invHY,weightC);
+//	cgMPI.computeFirstStep(u,rhs,res,d,delta0,nx,ny,invHX,invHY,weightC);
 /*
 	for(int iter = 1; iter < std::atoi(argv[3]) ; ++iter)
 	{
